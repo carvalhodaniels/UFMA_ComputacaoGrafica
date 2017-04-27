@@ -10,52 +10,56 @@ function canvasApp () {
         return;
     }
     // Get a reference to the Canvas object on the HTML page
+    var canvasTop = document.getElementById("canvasTop");
     var canvas = document.getElementById("canvasOne");
+    var canvasMenu = document.getElementById("canvasMenu");
     // Get reference to the Canvas 2D context from the Canvas object
+    var contextTop = canvasTop.getContext("2d");
     var context = canvas.getContext("2d");
+    var contextMenu = canvasMenu.getContext("2d");
     // Variavel que guarda a opcao selecionada no menu
     var option = 0;
     // The rectangle should have x,y,width,height properties
 	var pButton = {
-	    x: 740,
-	    y: 50,
+	    x: 0,
+	    y: 0,
 	    width: 60,
 	    height: 60
 	};
 	var rButton = {
-	    x: 740,
-	    y: 110,
+	    x: 0,
+	    y: 60,
 	    width: 60,
 	    height: 60
 	};
 	var plButton = {
-	    x: 740,
-	    y: 170,
+	    x: 0,
+	    y: 120,
 	    width: 60,
 	    height: 60
 	};
 	var pickBox = {
-	    x: 740,
-	    y: 230,
+	    x: 0,
+	    y: 180,
 	    width: 60,
 	    height: 60
 	};
 	var scaleBox = {
-	    x: 740,
-	    y: 290,
+	    x: 0,
+	    y: 240,
 	    width: 60,
 	    height: 60
 	};
 	var rotateBox = {
-	    x: 740,
-	    y: 350,
+	    x: 0,
+	    y: 300,
 	    width: 60,
 	    height: 60
 	};
 	var drawBox = {
 	    x: 0,
-	    y: 50,
-	    width: 740,
+	    y: 0,
+	    width: 736,
 	    height: 550
 	};
 	// Quantidade de clicks ao desenhar
@@ -69,6 +73,7 @@ function canvasApp () {
 	var selected = [];
 	selected.push('', 0);
 	var rotateClick = {on: 0, x: 0, y: 0};
+	var oldMousePos;
 	var reta = {
 		x1: 0,
 		x2: 0,
@@ -78,56 +83,56 @@ function canvasApp () {
 	// Create a stub function used to draw onto the Canvas
 	function draw() {
 		// Draw filled box as the background
-		context.fillStyle = "#bfe7ef";
-		context.fillRect(0, 0, 800, 50);
-		// Draw “stroke” box as the border
-		context.strokeStyle = "#000000"; 
-		context.strokeRect(0,  50, 740, 550);
+		contextTop.fillStyle = "#bfe7ef";
+		contextTop.fillRect(0, 0, 800, 50);
 		// Box de titulo
-		context.strokeStyle = "#000000"; 
-		context.strokeRect(0,  0, 800, 50);
-		// Box de menus
-		context.strokeStyle = "#000000"; 
-		context.strokeRect(740,  50, 60, 550);
+		contextTop.strokeStyle = "#000000"; 
+		contextTop.strokeRect(0,  0, 800, 50);
 		// Adding Text
-		context.fillStyle    = "#000000";
-		context.font         = "20px _sans";
-		context.fillText("Daniel's Paint",300,30 );
+		contextTop.fillStyle    = "#000000";
+		contextTop.font         = "20px _sans";
+		contextTop.fillText("Daniel's Paint",300,30 );
+		// Draw “stroke” box as the border
+		context.strokeStyle = "#000000";
+		context.strokeRect(drawBox.x,  drawBox.y, drawBox.width, drawBox.height);
+		// Box de menus
+		contextMenu.strokeStyle = "#000000"; 
+		contextMenu.strokeRect(0,  0, 60, 550);
 		// Adding an image
 		// Botao Ponto
 		var pontoButton = new Image();
 		pontoButton.onload = function () {
-		   context.drawImage(pontoButton,740,50);
+		   contextMenu.drawImage(pontoButton,pButton.x,pButton.y);
 		}
 		pontoButton.src = "pontoButton.jpg";
 		// Botao Reta
 		var retaButton = new Image();
 		retaButton.onload = function () {
-		   context.drawImage(retaButton,740,110);
+		   contextMenu.drawImage(retaButton,rButton.x,rButton.y);
 		}
 		retaButton.src = "retaButton.jpg";
 		// Botao Poligonal
 		var poligonalButton = new Image();
 		poligonalButton.onload = function () {
-		   context.drawImage(poligonalButton,740,170);
+		   contextMenu.drawImage(poligonalButton,plButton.x,plButton.y);
 		}
 		poligonalButton.src = "poligonalButton.jpg";
 		// Botao Pick
 		var pickButton = new Image();
 		pickButton.onload = function () {
-		   context.drawImage(pickButton,740,230);
+		   contextMenu.drawImage(pickButton,pickBox.x,pickBox.y);
 		}
 		pickButton.src = "pickButton.jpg";
 		// Botao Scale
 		var scaleButton = new Image();
 		scaleButton.onload = function () {
-		   context.drawImage(scaleButton,740,290);
+		   contextMenu.drawImage(scaleButton,scaleBox.x,scaleBox.y);
 		}
 		scaleButton.src = "scaleButton.jpg";
 		// Botao Rotate
 		var rotateButton = new Image();
 		rotateButton.onload = function () {
-		   context.drawImage(rotateButton,740,350);
+		   contextMenu.drawImage(rotateButton,rotateBox.x,rotateBox.y);
 		}
 		rotateButton.src = "rotateButton.jpg";
 	}
@@ -437,27 +442,24 @@ function canvasApp () {
     	return objtmp;
     }
     // Rotação
-    function rotate(cos, sin, obj){
+    function rotate(cos, sin, p){
     	var mat;
-    	var r;
-    	var p;
-    	var p0;
+    	var p0, p1;
     	mat = [[cos, -sin, 0],
     			[sin, cos, 0],
     			[0, 0, 1]];
 		p0 = [];
-    	r = obj[selected[1]];
-    	p = translate({x: r.x, y: r.y}, {x: -rotateClick.x, y: -rotateClick.y});
-    	p0.push([p.x[0]]);
-    	p0.push([p.y[0]]);
+    	p1 = translate({x: p.x, y: p.y}, {x: -rotateClick.x, y: -rotateClick.y});
+    	p0.push([p1.x[0]]);
+    	p0.push([p1.y[0]]);
     	p0.push([1]);
     	p0 = multMatriz(mat, p0);
-    	p.x = p0[0];
-    	p.y = p0[1];
-    	p = translate({x: p.x, y: p.y}, {x: rotateClick.x, y: rotateClick.y});
-    	r.x = p.x[0];
-    	r.y = p.y[0];
-    	return r
+    	p1.x = p0[0];
+    	p1.y = p0[1];
+    	p1 = translate({x: p1.x, y: p1.y}, {x: rotateClick.x, y: rotateClick.y});
+    	p.x = p1.x[0];
+    	p.y = p1.y[0];
+    	return p
     }
     // Function to get the mouse position on a rectangle
 	function getMousePosRect(canvas, event) {
@@ -484,8 +486,8 @@ function canvasApp () {
 			return false;
 		}
 	}
-	canvas.addEventListener('click', function(evt) {
-		var mousePos = getMousePosRect(canvas, evt);
+	canvasMenu.addEventListener('click', function(evt) {
+		var mousePos = getMousePosRect(canvasMenu, evt);
 
 	    if (isInside(mousePos,pButton)){
 	    	option = 1;
@@ -499,7 +501,12 @@ function canvasApp () {
 	    	option = 6;
 	    }else if(isInside(mousePos,rotateBox)){
 	    	option = 7;
-	    }else if(isInside(mousePos,drawBox)){
+	    }
+	});
+	canvas.addEventListener('click', function(evt) {
+		var mousePos = getMousePosRect(canvas, evt);
+
+	   if(isInside(mousePos,drawBox)){
 	    	// Desenha um ponto
 	    	if(option == 1){
 	    		drawPonto(mousePos.x,  mousePos.y);
@@ -609,13 +616,38 @@ function canvasApp () {
 				ponto = mousePos;
 			}
 		}else if(option == 7 && rotateClick.on == 1){
+			var ang;
 			redrawAll();
-			context.beginPath();
+			/*context.beginPath();
 			context.arc(rotateClick.x, rotateClick.y, 5, 0, 2*Math.PI);
 			context.stroke();
-			var ang = getAngle({x: 0, y: 0}, {x: rotateClick.x, y: rotateClick.y}, mousePos);
+			ang = getAngle({x: 0, y: 0}, {x: rotateClick.x, y: rotateClick.y}, mousePos);
+			console.log(Math.trunc(ang)/1000);*/
+			if(oldMousePos){
+				if(mousePos.x < oldMousePos.x)
+					ang = 0.1;
+				else
+					ang = -0.1;
+			}
+			oldMousePos = mousePos;
 			if(selected[0] == 'Ponto' && ang){
-				pontos[selected[1]] = rotate(Math.cos(ang), Math.sin(ang), pontos);
+				pontos[selected[1]] = rotate(Math.cos(-ang), Math.sin(-ang), pontos[selected[1]]);
+			}else if((selected[0] == 'Reta' || selected[0] == 'Poligono') && ang){
+				var obj;
+				if(selected[0] == 'Reta')
+					obj = poligonais;
+				else
+					obj = poligonos;
+				for(var i = 0; i < obj[selected[1]].length; i++){
+					var p = {x: obj[selected[1]][i].x1, y: obj[selected[1]][i].y1};
+					p = rotate(Math.cos(-ang), Math.sin(-ang), p);
+					obj[selected[1]][i].x1 = p.x;
+					obj[selected[1]][i].y1 = p.y;
+					p = {x: obj[selected[1]][i].x2, y: obj[selected[1]][i].y2};
+					p = rotate(Math.cos(-ang), Math.sin(-ang), p);
+					obj[selected[1]][i].x2 = p.x;
+					obj[selected[1]][i].y2 = p.y;
+				}
 			}
 		}
 	});
@@ -642,9 +674,9 @@ function canvasApp () {
 				rotateClick.on = 1;
 				rotateClick.x = mousePos.x;
 				rotateClick.y = mousePos.y;
-				context.beginPath();
+				/*context.beginPath();
 				context.arc(rotateClick.x, rotateClick.y, 5, 0, 2*Math.PI);
-				context.stroke();
+				context.stroke();*/
 			}
 		}
 	});
