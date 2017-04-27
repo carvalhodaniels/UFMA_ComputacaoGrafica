@@ -68,6 +68,7 @@ function canvasApp () {
 	var poligonos = [];
 	var selected = [];
 	selected.push('', 0);
+	var rotateClick = {on: 0, x: 0, y: 0};
 	var reta = {
 		x1: 0,
 		x2: 0,
@@ -345,6 +346,13 @@ function canvasApp () {
     	}
     	return -1;
     }
+    // Calcula o angulo  entre 3 pontos
+    function getAngle(p0,p1,p2) {
+	    var b = Math.pow(p1.x-p0.x,2) + Math.pow(p1.y-p0.y,2),
+	        a = Math.pow(p1.x-p2.x,2) + Math.pow(p1.y-p2.y,2),
+	        c = Math.pow(p2.x-p0.x,2) + Math.pow(p2.y-p0.y,2);
+	    return Math.acos( (a+b-c) / Math.sqrt(4*a*b) )*180 /Math.PI ;
+	}
     // Multiplica matrizes
     function multMatriz(mat1, mat2){
     	var i, j, k, s;
@@ -427,6 +435,29 @@ function canvasApp () {
 	    	objtmp.push(r);
     	}
     	return objtmp;
+    }
+    // Rotação
+    function rotate(cos, sin, obj){
+    	var mat;
+    	var r;
+    	var p;
+    	var p0;
+    	mat = [[cos, -sin, 0],
+    			[sin, cos, 0],
+    			[0, 0, 1]];
+		p0 = [];
+    	r = obj[selected[1]];
+    	p = translate({x: r.x, y: r.y}, {x: -rotateClick.x, y: -rotateClick.y});
+    	p0.push([p.x[0]]);
+    	p0.push([p.y[0]]);
+    	p0.push([1]);
+    	p0 = multMatriz(mat, p0);
+    	p.x = p0[0];
+    	p.y = p0[1];
+    	p = translate({x: p.x, y: p.y}, {x: rotateClick.x, y: rotateClick.y});
+    	r.x = p.x[0];
+    	r.y = p.y[0];
+    	return r
     }
     // Function to get the mouse position on a rectangle
 	function getMousePosRect(canvas, event) {
@@ -577,6 +608,15 @@ function canvasApp () {
 				redrawAll();
 				ponto = mousePos;
 			}
+		}else if(option == 7 && rotateClick.on == 1){
+			redrawAll();
+			context.beginPath();
+			context.arc(rotateClick.x, rotateClick.y, 5, 0, 2*Math.PI);
+			context.stroke();
+			var ang = getAngle({x: 0, y: 0}, {x: rotateClick.x, y: rotateClick.y}, mousePos);
+			if(selected[0] == 'Ponto' && ang){
+				pontos[selected[1]] = rotate(Math.cos(ang), Math.sin(ang), pontos);
+			}
 		}
 	});
 	canvas.addEventListener('mousedown', function(evt) {
@@ -597,6 +637,15 @@ function canvasApp () {
 				}
 			}
 			ponto = mousePos;
+		}else if(option == 7){
+			if(selected[0] != ''){
+				rotateClick.on = 1;
+				rotateClick.x = mousePos.x;
+				rotateClick.y = mousePos.y;
+				context.beginPath();
+				context.arc(rotateClick.x, rotateClick.y, 5, 0, 2*Math.PI);
+				context.stroke();
+			}
 		}
 	});
 	canvas.addEventListener('mouseup', function(evt) {
@@ -604,6 +653,9 @@ function canvasApp () {
 		var p;
 		if(option == 51){
 			option = 5;
+		}else if(option == 7 && rotateClick.on == 1){
+			rotateClick.on = 0;
+			redrawAll();
 		}
 	});
 	canvas.addEventListener('mousewheel', function(evt) {
