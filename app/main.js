@@ -46,6 +46,12 @@ function canvasApp () {
 	    width: 60,
 	    height: 60
 	};
+	var rotateBox = {
+	    x: 740,
+	    y: 350,
+	    width: 60,
+	    height: 60
+	};
 	var drawBox = {
 	    x: 0,
 	    y: 50,
@@ -117,6 +123,12 @@ function canvasApp () {
 		   context.drawImage(scaleButton,740,290);
 		}
 		scaleButton.src = "scaleButton.jpg";
+		// Botao Rotate
+		var rotateButton = new Image();
+		rotateButton.onload = function () {
+		   context.drawImage(rotateButton,740,350);
+		}
+		rotateButton.src = "rotateButton.jpg";
 	}
     draw();
     // Desenha um ponto
@@ -370,30 +382,51 @@ function canvasApp () {
     	return { x: x, y: y };
     }
     // Escala
-    function scale(sx, sy){
-    	var mat;
-    	var r;
-    	var pm;
+    function scale(sx, sy, obj){
+    	var mat, i, objtmp = [];
+    	var r, tam;
+    	var pm, tmp, tmpx, tmpy;
     	var p;
-    	var p0 = [];
-    	if(selected[0] == 'Reta'){
-    		r = poligonais[selected[1]][0];
-    	}
+    	var p0;
     	mat = [[sx, 0, 0],
     			[0, sy, 0],
     			[0, 0, 1]];
-    	pm = centroReta(r);
-    	p = translate({x: r.x1, y: r.y1}, {x: -pm.x, y: -pm.y});
-    	p0.push([p.x]);
-    	p0.push([p.y]);
-    	p0.push([1]);
-    	p0 = multMatriz(mat, p0);
-    	p.x = p0[0];
-    	p.y = p0[1];
-    	p = translate({x: p.x, y: p.y}, {x: pm.x, y: pm.y});
-    	r.x1 = p.x[0];
-    	r.y1 = p.y[0];
-    	return r;
+ 		tam = obj[selected[1]].length;
+		tmpx = 0, tmpy = 0;
+		for(var i = 0; i < tam; i++){
+			tmp = centroReta(obj[selected[1]][i]);
+			tmpx += tmp.x;
+			tmpy += tmp.y;
+		}
+		pm = {x: tmpx/tam, y: tmpy/tam};
+    	for(var i = 0; i < tam; i++){
+    		p0 = [];
+	    	r = obj[selected[1]][i];
+	    	p = translate({x: r.x1, y: r.y1}, {x: -pm.x, y: -pm.y});
+	    	p0.push([p.x]);
+	    	p0.push([p.y]);
+	    	p0.push([1]);
+	    	p0 = multMatriz(mat, p0);
+	    	p.x = p0[0];
+	    	p.y = p0[1];
+	    	p = translate({x: p.x, y: p.y}, {x: pm.x, y: pm.y});
+	    	r.x1 = p.x[0];
+	    	r.y1 = p.y[0];
+
+	    	p0 = [];
+	    	p = translate({x: r.x2, y: r.y2}, {x: -pm.x, y: -pm.y});
+	    	p0.push([p.x]);
+	    	p0.push([p.y]);
+	    	p0.push([1]);
+	    	p0 = multMatriz(mat, p0);
+	    	p.x = p0[0];
+	    	p.y = p0[1];
+	    	p = translate({x: p.x, y: p.y}, {x: pm.x, y: pm.y});
+	    	r.x2 = p.x[0];
+	    	r.y2 = p.y[0];
+	    	objtmp.push(r);
+    	}
+    	return objtmp;
     }
     // Function to get the mouse position on a rectangle
 	function getMousePosRect(canvas, event) {
@@ -433,6 +466,8 @@ function canvasApp () {
 	    	option = 5;
 	    }else if(isInside(mousePos,scaleBox)){
 	    	option = 6;
+	    }else if(isInside(mousePos,rotateBox)){
+	    	option = 7;
 	    }else if(isInside(mousePos,drawBox)){
 	    	// Desenha um ponto
 	    	if(option == 1){
@@ -572,9 +607,14 @@ function canvasApp () {
 		}
 	});
 	canvas.addEventListener('mousewheel', function(evt) {
-		if(option == 6){
+		if(option == 6 && selected[0] != ''){
 			var delta = Math.max(-1, Math.min(1, (evt.wheelDelta || -evt.detail)));
-			poligonais[selected[1]][0] = scale(delta*1.3, delta*1.3);
+			delta *= 0.3
+			delta = 1 + delta;
+			if(selected[0] == 'Reta')
+				poligonais[selected[1]] = scale(delta, delta, poligonais);
+			else if(selected[0] == 'Poligono')
+				poligonos[selected[1]] = scale(delta, delta, poligonos);
 			redrawAll();
 		}
 	});
