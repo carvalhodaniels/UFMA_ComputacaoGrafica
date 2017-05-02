@@ -56,6 +56,12 @@ function canvasApp () {
 	    width: 60,
 	    height: 60
 	};
+	var mirrorBox = {
+	    x: 0,
+	    y: 360,
+	    width: 60,
+	    height: 60
+	};
 	var drawBox = {
 	    x: 0,
 	    y: 0,
@@ -135,6 +141,12 @@ function canvasApp () {
 		   contextMenu.drawImage(rotateButton,rotateBox.x,rotateBox.y);
 		}
 		rotateButton.src = "rotateButton.jpg";
+		// Botao Espelhamento
+		var mirrorButton = new Image();
+		mirrorButton.onload = function () {
+		   contextMenu.drawImage(mirrorButton,mirrorBox.x,mirrorBox.y);
+		}
+		mirrorButton.src = "mirrorButton.jpg";
 	}
     draw();
     // Desenha um ponto
@@ -356,7 +368,7 @@ function canvasApp () {
 	    var b = Math.pow(p1.x-p0.x,2) + Math.pow(p1.y-p0.y,2),
 	        a = Math.pow(p1.x-p2.x,2) + Math.pow(p1.y-p2.y,2),
 	        c = Math.pow(p2.x-p0.x,2) + Math.pow(p2.y-p0.y,2);
-	    return Math.acos( (a+b-c) / Math.sqrt(4*a*b) )*180 /Math.PI ;
+	    return Math.acos( (a+b-c) / Math.sqrt(4*a*b) ) ;
 	}
     // Multiplica matrizes
     function multMatriz(mat1, mat2){
@@ -442,25 +454,86 @@ function canvasApp () {
     	return objtmp;
     }
     // Rotação
-    function rotate(cos, sin, p){
+    function rotate(cos, sin, p, c){
     	var mat;
     	var p0, p1;
     	mat = [[cos, -sin, 0],
     			[sin, cos, 0],
     			[0, 0, 1]];
 		p0 = [];
-    	p1 = translate({x: p.x, y: p.y}, {x: -rotateClick.x, y: -rotateClick.y});
+    	p1 = translate({x: p.x, y: p.y}, {x: -c.x, y: -c.y});
     	p0.push([p1.x[0]]);
     	p0.push([p1.y[0]]);
     	p0.push([1]);
     	p0 = multMatriz(mat, p0);
     	p1.x = p0[0];
     	p1.y = p0[1];
-    	p1 = translate({x: p1.x, y: p1.y}, {x: rotateClick.x, y: rotateClick.y});
+    	p1 = translate({x: p1.x, y: p1.y}, {x: c.x, y: c.y});
     	p.x = p1.x[0];
     	p.y = p1.y[0];
-    	return p
+    	return p;
     }
+    // Espelhamento
+    function mirror(p, r){
+    	var dx, dy, a, b, x, y;
+    	var p0 = {x: r.x1, y: r.y1};
+    	var p1 = {x: r.x2, y: r.y2};
+
+        dx = p1.x - p0.x;
+        dy = p1.y - p0.y;
+        a = (dx * dx - dy * dy) / (dx * dx + dy * dy);
+        b = 2 * dx * dy / (dx * dx + dy * dy);
+        x = Math.round(a * (p.x - p0.x) + b * (p.y - p0.y) + p0.x); 
+        y = Math.round(b * (p.x - p0.x) - a * (p.y - p0.y) + p0.y);
+
+        return { x:x, y:y };
+    }
+    /*function mirror(p, r){
+    	var p, p0 = [];
+    	var b, r1, r2;
+    	if(r.x1 < r.x2){
+		    r1 = {x: r.x1, y: r.y1};
+		    r2 = {x: r.x2, y: r.y2};
+		}else{
+			console.log('cre');
+		    r1 = {x: r.x2, y: r.y2};
+		    r2 = {x: r.x1, y: r.y1};
+		}
+		b = r1.y;
+	    var mat = [[1, 0, 0],
+	    			[0, -1, 0],
+	    			[0, 0, 1]];
+	    // Tranlação em -b
+	    var p1 = translate(r1, {x: 0, y: -b});
+	    r1 = {x: p1.x[0], y: p1.y[0]};
+	    p1 = translate(r2, {x: 0, y: -b});
+	    r2 = {x: p1.x[0], y: p1.y[0]};
+	    drawReta(r1.x, r1.y, r2.x, r2.y, 1);
+	    p1 = translate({x: p.x, y: p.y}, {x: 0, y: -b});
+    	// Rotação em -ang
+    	var ang = getAngle({x: r2.x, y: r1.y}, r1, r2);
+    	if(r.y1 < r.y2)
+    		ang *= -1;
+    	console.log((ang*180)/Math.PI);
+    	r2 = rotate(Math.cos(ang), Math.sin(ang), r2, r1);
+    	console.log(r1.x, r1.y);
+    	console.log(r2.x, r2.y);
+    	drawReta(r1.x, r1.y, r2.x, r2.y, 1);
+    	p1 = rotate(Math.cos(ang), Math.sin(ang), p1, r1);
+    	// Espelhamento em x
+    	p0.push([p1.x]);
+    	p0.push([p1.y]);
+    	p0.push([1]);
+    	p0 = multMatriz(mat, p0);
+    	p1 = {x: p0[0], y: p0[1]};
+    	p1 = {x: p1.x[0], y: p1.y[0]};
+    	// Rotação em ang
+    	p1 = rotate(Math.cos(-ang), Math.sin(-ang), p1, r1);
+    	// Tranlação em b
+    	p1 = translate({x: p1.x, y: p1.y}, {x: 0, y: b});
+    	p = {x: p1.x[0],y: p1.y[0]}
+    	return p;
+    }*/
     // Function to get the mouse position on a rectangle
 	function getMousePosRect(canvas, event) {
 	    var rect = canvas.getBoundingClientRect();
@@ -501,6 +574,8 @@ function canvasApp () {
 	    	option = 6;
 	    }else if(isInside(mousePos,rotateBox)){
 	    	option = 7;
+	    }else if(isInside(mousePos,mirrorBox)){
+	    	option = 8;
 	    }
 	});
 	canvas.addEventListener('click', function(evt) {
@@ -559,8 +634,45 @@ function canvasApp () {
 			    		}else{
 				    		selected[0] = '';
 				    		selected[1] = 0;
+
 				    		redrawAll();
 				    	}
+	    			}
+	    		}
+	    	}else if(option == 8){
+	    		if(clicks == 0){
+	    			reta.x1 = mousePos.x;
+	    			reta.y1 = mousePos.y;
+	    			clicks++;
+	    		}else{
+		    		if(clicks == 1){
+		    			var p;
+			    		reta.x2 = mousePos.x;
+		    			reta.y2 = mousePos.y;
+		    			clicks = 0;
+		    			if(selected[0] == 'Ponto'){
+		    				p = mirror(pontos[selected[1]], reta);
+							pontos[selected[1]] = p;
+		    			}else if(selected[0] == 'Reta'){
+		    				for(i = 0; i < poligonais[selected[1]].length; i++){
+			    				p = mirror({x: poligonais[selected[1]][i].x1, y: poligonais[selected[1]][i].y1}, reta);
+								poligonais[selected[1]][i].x1 = p.x;
+								poligonais[selected[1]][i].y1 = p.y;
+								p = mirror({x: poligonais[selected[1]][i].x2, y: poligonais[selected[1]][i].y2}, reta);
+								poligonais[selected[1]][i].x2 = p.x;
+								poligonais[selected[1]][i].y2 = p.y;
+							}
+		    			}else if(selected[0] == 'Poligono'){
+		    				for(i = 0; i < poligonos[selected[1]].length; i++){
+			    				p = mirror({x: poligonos[selected[1]][i].x1, y: poligonos[selected[1]][i].y1}, reta);
+								poligonos[selected[1]][i].x1 = p.x;
+								poligonos[selected[1]][i].y1 = p.y;
+								p = mirror({x: poligonos[selected[1]][i].x2, y: poligonos[selected[1]][i].y2}, reta);
+								poligonos[selected[1]][i].x2 = p.x;
+								poligonos[selected[1]][i].y2 = p.y;
+							}
+		    			}
+		    			redrawAll();
 	    			}
 	    		}
 	    	}
@@ -631,7 +743,8 @@ function canvasApp () {
 			}
 			oldMousePos = mousePos;
 			if(selected[0] == 'Ponto' && ang){
-				pontos[selected[1]] = rotate(Math.cos(-ang), Math.sin(-ang), pontos[selected[1]]);
+				console.log(ang);
+				pontos[selected[1]] = rotate(Math.cos(-ang), Math.sin(-ang), pontos[selected[1]], {x: rotateClick.x, y: rotateClick.y});
 			}else if((selected[0] == 'Reta' || selected[0] == 'Poligono') && ang){
 				var obj;
 				if(selected[0] == 'Reta')
@@ -640,14 +753,19 @@ function canvasApp () {
 					obj = poligonos;
 				for(var i = 0; i < obj[selected[1]].length; i++){
 					var p = {x: obj[selected[1]][i].x1, y: obj[selected[1]][i].y1};
-					p = rotate(Math.cos(-ang), Math.sin(-ang), p);
+					p = rotate(Math.cos(-ang), Math.sin(-ang), p, {x: rotateClick.x, y: rotateClick.y});
 					obj[selected[1]][i].x1 = p.x;
 					obj[selected[1]][i].y1 = p.y;
 					p = {x: obj[selected[1]][i].x2, y: obj[selected[1]][i].y2};
-					p = rotate(Math.cos(-ang), Math.sin(-ang), p);
+					p = rotate(Math.cos(-ang), Math.sin(-ang), p, {x: rotateClick.x, y: rotateClick.y});
 					obj[selected[1]][i].x2 = p.x;
 					obj[selected[1]][i].y2 = p.y;
 				}
+			}
+		}else if(option == 8){
+			if(clicks == 1){
+				redrawAll();
+				drawReta(reta.x1, reta.y1, mousePos.x, mousePos.y, 1);
 			}
 		}
 	});
