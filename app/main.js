@@ -62,6 +62,12 @@ function canvasApp () {
 	    width: 60,
 	    height: 60
 	};
+	var areaBox = {
+	    x: 0,
+	    y: 420,
+	    width: 60,
+	    height: 60
+	};
 	var drawBox = {
 	    x: 0,
 	    y: 0,
@@ -147,6 +153,12 @@ function canvasApp () {
 		   contextMenu.drawImage(mirrorButton,mirrorBox.x,mirrorBox.y);
 		}
 		mirrorButton.src = "mirrorButton.jpg";
+		// Botao Area
+		var areaButton = new Image();
+		areaButton.onload = function () {
+		   contextMenu.drawImage(areaButton,areaBox.x,areaBox.y);
+		}
+		areaButton.src = "areaButton.jpg";
 	}
     draw();
     // Desenha um ponto
@@ -534,6 +546,23 @@ function canvasApp () {
     	p = {x: p1.x[0],y: p1.y[0]}
     	return p;
     }*/
+    // Area de um poligono
+    function area(p){
+    	var area = 0;
+		var N = p.length;
+		//We will triangulate the polygon
+		//into triangles with points p[0],p[i],p[i+1]
+
+		for(var i = 1; i+1<N; i++){
+		    var x1 = p[i].x1 - p[0].x1;
+		    var y1 = p[i].y1 - p[0].y1;
+		    var x2 = p[i+1].x1 - p[0].x1;
+		    var y2 = p[i+1].y1 - p[0].y1;
+		    var cross = x1*y2 - x2*y1;
+		    area += cross;
+		}
+		return Math.abs(area/2.0);
+    }
     // Function to get the mouse position on a rectangle
 	function getMousePosRect(canvas, event) {
 	    var rect = canvas.getBoundingClientRect();
@@ -576,6 +605,8 @@ function canvasApp () {
 	    	option = 7;
 	    }else if(isInside(mousePos,mirrorBox)){
 	    	option = 8;
+	    }else if((selected[0] == 'Poligono') && (isInside(mousePos,areaBox))){
+	    	console.log(area(poligonos[selected[1]]));
 	    }
 	});
 	canvas.addEventListener('click', function(evt) {
@@ -743,7 +774,6 @@ function canvasApp () {
 			}
 			oldMousePos = mousePos;
 			if(selected[0] == 'Ponto' && ang){
-				console.log(ang);
 				pontos[selected[1]] = rotate(Math.cos(-ang), Math.sin(-ang), pontos[selected[1]], {x: rotateClick.x, y: rotateClick.y});
 			}else if((selected[0] == 'Reta' || selected[0] == 'Poligono') && ang){
 				var obj;
